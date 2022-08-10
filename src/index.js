@@ -1,15 +1,66 @@
-import React from 'react';
+import _ from 'lodash';
+import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import { Provider } from 'react-redux';
-import { createStore, applyMiddleware } from 'redux';
+import YTSearch from 'youtube-api-search';
+import Logo from './components/logo';
+import SearchBar from './components/search_bar';
+import VideoList from './components/video_list';
+import VideoDetail from './components/video_detail';
 
-import App from './components/app';
-import reducers from './reducers';
+const API_KEY = 'AIzaSyDtzBx6Byn7JahWG8wHn2s8qxphYw2vCrk';
 
-const createStoreWithMiddleware = applyMiddleware()(createStore);
+class App extends Component {
+    constructor(props) {
+        super(props);
 
-ReactDOM.render(
-  <Provider store={createStoreWithMiddleware(reducers)}>
-    <App />
-  </Provider>
-  , document.querySelector('.container'));
+        this.state = {
+            videos: [],
+            selectedVideo: null,
+        };
+    }
+
+    componentDidMount() {
+        this.videoSearch('kuchkaho tv');
+    }
+
+    videoSearch(term) {
+        YTSearch({key: API_KEY, term: term}, (video) => {
+            this.setState({
+                videos: video,
+                selectedVideo: video[0],
+            });
+        })
+    }
+
+    yaqiCheck = (sel) => {
+        console.log("SAL", sel)
+        this.setState({
+            selectedVideo: sel,
+        })
+    }
+
+    render () {
+        const videoSearch = _.debounce((term) => { this.videoSearch(term) }, 300);
+
+        return (
+            <div>
+                <div className='header'>
+                    <Logo>
+                    </Logo>
+                    <SearchBar
+                        onSearchTermChange={videoSearch}
+                    />
+                </div>
+                <VideoDetail
+                    video={this.state.selectedVideo}
+                />
+                <VideoList
+                    onVideoSelect={(sal) => this.yaqiCheck(sal)}
+                    videos={this.state.videos}
+                />
+            </div>
+        );
+    }
+};
+
+ReactDOM.render(<App />, document.querySelector('.container'));
